@@ -9,3 +9,5 @@ dist/
 .sites-runtime/
 .data/
 test-results/
+supabase/.temp/
+.neon

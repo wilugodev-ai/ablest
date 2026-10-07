@@ -1,66 +1,77 @@
-# Ablests on Render Free + Supabase
+# Ablests on Render Free + Neon
 
-Two free Render services run the Next.js website and NestJS API. A new, separate Supabase project stores live account records, password hashes, sessions, project content, and private images. The existing SQLite database remains independent for local development.
+The Next.js website and NestJS API run as two Free Render services. The hosted database is a separate Neon PostgreSQL project. User profiles, passwords, roles, sessions, website projects, image descriptions, and optimized image bytes persist in Neon. Local development keeps the independent SQLite database.
 
-Deployment is prepared, but no live services, Supabase project, or DNS changes have been created. Commit and push the deployment changes yourself when ready.
+## Current database
 
-## 1. Create a separate Ablests Supabase project
+The Ablests project was created in the **Ablests Digital Solution** Free Neon organization, in **AWS US East 1**, on October 7, 2026. Its project ID is `nameless-frost-31224887`. InTouch and IterateView's Supabase projects were not modified.
 
-Use a new project for Ablests. Do not select, modify, or reuse the InTouch or IterateView projects.
+The local administrator and two website projects were imported into this database. Password hashes, roles, and all existing profile/project settings were preserved. Active sessions were not copied: sign in normally using your existing local administrator email/password. Local SQLite was not changed and is not synchronized with Neon.
 
-1. Create the project in Supabase. A US East region matches the Render services. Keep the free plan if available in your account.
-2. Apply [202610070001_content.sql](../supabase/migrations/202610070001_content.sql) in that project's SQL Editor. It creates backend-only tables, enables row-level security, revokes direct browser access, and creates the private `ablest-project-images` bucket. It seeds the InTouch and IterateView portfolio entries once.
-3. Copy the project's HTTPS URL and a new `sb_secret_...` key from its API Keys settings to the Render API environment. The secret stays only on the API, never in the website environment, browser, Git, or a `NEXT_PUBLIC_*` variable.
+The private pooled connection is saved in the ignored `apps/api/.env.hosted` file. Use the value of `DATABASE_URL` from that file for the Render API service; it includes a password and must stay out of Git, browser code, and `NEXT_PUBLIC_*` variables.
 
-Ablests keeps its existing email/password authentication in NestJS, using salted scrypt hashes and HttpOnly session cookies. Supabase stores those records; this implementation does not use Supabase Auth accounts. Email verification and password recovery delivery remain unconfigured. The API derives the user ID from the verified session and validates administrator roles before admin operations. Direct anonymous/authenticated Supabase table access is denied.
+## 1. Create or update the Render Blueprint
 
-## 2. Create the Render Blueprint
+1. Push the latest Neon deployment commit to `wilugodev-ai/ablest` on `main`.
+2. In Render, select **New → Blueprint**, connect that repository, and use `render.yaml`. If you started the old Supabase Blueprint form, return to repository selection/reload it so it reads the updated file.
+3. Confirm `ablest-api` and `ablest-web` both use **Free**. No Render database or disk is required. Builds run from the repository root, using Node 24.19.0 and pnpm 12.5.1 through Corepack.
+4. Supply these fields:
 
-1. Commit and push the changes to `wilugodev-ai/ablest` on GitHub.
-2. In Render, select **New → Blueprint**, choose this repository and `main`, and use `render.yaml`.
-3. Confirm **both services are Free**, with no persistent disk or Render database. Builds run from the repository root, using Node 24.19.0 and Corepack/pnpm 12.5.1.
-4. Supply the API's `SUPABASE_URL` and `SUPABASE_SECRET_KEY` from the new Ablests project. The API uses `DATA_BACKEND=supabase` and binds to `0.0.0.0` on Render's assigned `PORT`.
-5. After Render assigns the API's actual public HTTPS address, set the web service's `API_URL` to it, without `/v1`. Free services cannot use Render's private network. Do not assume an exact hostname. If required during creation, use `https://api-not-configured.invalid` temporarily, replace it with the actual API URL, and redeploy the web service. The portal will not function until this is done.
-6. Check the API's `/v1/health/database`. It verifies the seeded database schema and private image bucket. A failed check prevents the API deployment from being marked healthy.
+| Service | Variable | Value |
+| --- | --- | --- |
+| API | `DATABASE_URL` | Private pooled connection from `apps/api/.env.hosted` |
+| Web | `API_URL` | The API's actual public HTTPS URL, without `/v1` |
 
-The web and API `WEB_ORIGIN` values are `https://www.ablestsolutions.com`. The web `SITE_URL` is the same address. Forms on the temporary `onrender.com` URL are rejected while this origin is configured. To test before DNS is connected, temporarily set both origins to the actual web Render URL, then restore the domain origin and redeploy.
+If the API URL is unavailable during initial creation, use `https://api-not-configured.invalid` temporarily. After Render creates the API, copy its real public URL into the web environment and redeploy the web service. The portal will not work until that value is correct.
 
-## 3. Connect ablestsolutions.com in Hostinger
+The API's `DATA_BACKEND=neon` selects the hosted database. It applies `postgres/schema.sql` transactionally at startup; repeated deployment does not recreate accounts or overwrite content. `/v1/health/database` checks database readiness. Hosted mode never opens or falls back to local SQLite.
 
-1. In the Render **web service**, open **Settings → Custom Domains** and add `www.ablestsolutions.com`. Render also adds the root domain and redirects it to www.
-2. In Hostinger, open **Domains → DNS** and choose `ablestsolutions.com`. The domain was using `ns1.dns-parking.com` and `ns2.dns-parking.com` when checked on October 7, 2026. Keep those nameservers.
-3. Apply the exact records displayed by Render. Its currently documented records for this type of provider are:
+Both `WEB_ORIGIN` settings and the web `SITE_URL` use `https://www.ablestsolutions.com`. Forms on the temporary Render address are rejected while that canonical origin is configured. To test before DNS is ready, temporarily set both origins to the actual web Render address, then restore them to the custom domain and redeploy.
+
+## 2. Connect the Hostinger domain
+
+1. On the Render **web service**, open **Settings → Custom Domains** and add `www.ablestsolutions.com`. Render also adds the root domain and redirects it to www.
+2. In Hostinger, open **Domains → DNS**, choose `ablestsolutions.com`, and use the exact records displayed by Render. Keep the existing Hostinger nameservers.
 
 | Type | Name | Value |
 | --- | --- | --- |
-| A | `@` | Render's load-balancer IP, currently `216.24.57.1` |
+| A | `@` | Render's currently documented load-balancer IP, `216.24.57.1` |
 | CNAME | `www` | The actual web service's `onrender.com` hostname, without https:// or a path |
 
-The old root A record was `2.57.91.91`, and www pointed to `ablestsolutions.com`. Replace only the conflicting website records. Remove conflicting website AAAA records if present. Preserve MX, SPF, DKIM, DMARC, and unrelated services. If CAA records exist, follow Render's certificate authority requirements.
+The root previously pointed to `2.57.91.91`, and www was a CNAME to `ablestsolutions.com`. Replace conflicting website A/CNAME records and remove conflicting website AAAA records. Preserve email MX/SPF/DKIM/DMARC records and unrelated services. Follow Render's requirements if CAA records exist.
 
-4. Back in Render, verify both domains and wait for DNS propagation and the HTTPS certificate. Render manages certificate issuance and renewal.
+3. Return to Render and verify both domains. Wait for DNS propagation and HTTPS certificate issuance before using the production login. Render manages certificate renewal.
 
-## 4. Initialize your hosted administrator
+## 3. User and administrator configuration
 
-The Blueprint generates `ADMIN_SETUP_TOKEN` in the API environment. Keep it private. Open `https://www.ablestsolutions.com/admin`, enter `wilugo91@gmail.com`, your chosen password, and the **Owner setup code** from that environment setting. An incorrect, missing, or unconfigured code cannot create the hosted administrator.
+The imported administrator uses the same email/password as locally. Sign in from the website: **Admin** appears only for the verified administrator role. New registrations always receive the Client role, and clients can view/update only their own name, email, company, and phone.
 
-Then use **Sign in** on the website. The Admin option appears only when an administrator is authenticated. Client registration always creates the Client role; clients see only their own name, email, company, and phone. You retain the existing project and image controls.
+Passwords remain salted scrypt hashes. Session tokens are hashed in the database and use HttpOnly/SameSite cookies; hosted HTTPS cookies are Secure. Sessions last eight hours. Login throttling persists in Neon across API restarts. No ChatGPT login is used.
 
-The live database starts separately from local development. Local accounts/images are not copied or synchronized automatically. Changes in Supabase do not change `.data/content.sqlite`, and changes in the local database do not change the live site.
+If deploying a completely new empty database instead, Render generates a private `ADMIN_SETUP_TOKEN`. Visit `/admin` once, enter the configured `ADMIN_EMAIL`, password, and this Owner setup code. The code cannot replace an existing administrator or promote a client account. It is not needed after the current local administrator import.
 
-## 5. Verify the live site
+Portfolio images are normalized to WebP and stored as PostgreSQL binary data. Inputs remain limited to 8 MB and 25 megapixels; the stored hosted image is limited to 2 MB. Project/image limits are enforced atomically. Draft images are available only to administrators; published images are served through the API. Deleting a project removes its images in the same database operation. Images count toward Neon database storage.
 
-Test client signup, profile save/reload, sign-out, administrator sign-in, project edits, and image upload. Use two disposable client accounts to verify data isolation and denied admin access. Redeploy the API and confirm data persists. Run live checks only against this new Ablests project; the repository's automated tests use temporary local fixtures.
+Email verification and client password recovery delivery are not configured. The profile-only client area does not include CRM records, documents, or private client projects.
 
-Render Free can sleep after inactivity and shares 750 instance-hours per workspace per month. The web bridge waits up to 75 seconds for startup and turns platform HTML errors into a readable retry message. Writes are not automatically retried. Supabase retains data across Render restarts.
+## Local development and reviewed imports
+
+`pnpm dev` uses SQLite by default and does not load `.env.hosted`. Do not copy the hosted settings over `apps/api/.env` just to run local development.
+
+For a future fresh Neon database, `pnpm neon:import-local --confirm` is the one-time transfer command. It reads the local database without writing to it, preserves passwords/roles and project/image settings, excludes sessions, locks the target during transfer, and refuses to overwrite an already-imported or populated target. It does not create ongoing synchronization.
+
+## Verification and limits
+
+Validate public pages, registration/profile persistence, admin-only navigation, image upload, hidden drafts, and sign-out. Test with two disposable clients to confirm profile isolation. Redeploy the API and confirm settings persist. The repository's automated PostgreSQL tests use in-memory fixtures rather than your live database.
+
+Render Free services can sleep and share free running hours across the workspace. The web bridge waits up to 75 seconds for startup and converts platform HTML errors into a readable retry message; writes are not automatically retried. Neon Free has database/compute/network limits; review the current project's quota in its Console. Stored images consume that database quota. Upgrading a provider plan requires your choice.
 
 ## References
 
-- [Render Free limitations](https://render.com/docs/free)
-- [Blueprint YAML fields](https://render.com/docs/blueprint-spec)
-- [Render port binding](https://render.com/docs/web-services#port-binding)
+- [Neon Free limits](https://neon.com/docs/introduction/plans)
+- [Neon connections for Render/Node](https://neon.com/docs/connect/choose-connection)
+- [Render Free limits](https://render.com/docs/free)
+- [Render Blueprints](https://render.com/docs/infrastructure-as-code)
 - [Render custom domains](https://render.com/docs/custom-domains)
 - [Render DNS records](https://render.com/docs/configure-other-dns)
 - [Hostinger DNS management](https://www.hostinger.com/support/1583249-how-to-manage-dns-records-at-hostinger/)
-- [Supabase server-only API keys](https://supabase.com/docs/guides/getting-started/api-keys)
-- [Supabase private Storage access](https://supabase.com/docs/guides/storage/security/access-control)

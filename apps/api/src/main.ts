@@ -10,9 +10,10 @@ class SiteController {
 class AppModule {}
 async function bootstrap() {
   const backend=process.env.DATA_BACKEND || 'sqlite';
-  if(!['sqlite','supabase'].includes(backend))throw new Error('DATA_BACKEND must be sqlite or supabase.');
-  if(process.env.RENDER==='true' && backend!=='supabase')throw new Error('Render Free requires DATA_BACKEND=supabase for durable data.');
-  const controllers=backend==='supabase' ? [(await import('./cloud')).CloudController] : [(await import('./content')).ContentController,(await import('./accounts')).AccountsController];
+  if(!['sqlite','supabase','neon'].includes(backend))throw new Error('DATA_BACKEND must be sqlite, neon, or supabase.');
+  if(process.env.RENDER==='true' && backend==='sqlite')throw new Error('Render Free requires a hosted database backend for durable data.');
+  if(backend==='neon')await (await import('./neon-database')).initialiseNeonDatabase();
+  const controllers=backend==='neon'?[(await import('./neon')).NeonController]:backend==='supabase' ? [(await import('./cloud')).CloudController] : [(await import('./content')).ContentController,(await import('./accounts')).AccountsController];
   const app = await NestFactory.create<NestExpressApplication>({module:AppModule,controllers});
   app.enableShutdownHooks();
   app.useBodyParser('json', { limit: '100kb' });

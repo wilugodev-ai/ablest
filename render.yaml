@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://render.com/schema/render.yaml.json
-# Two free services. Durable accounts/content/images live in a separate Supabase project.
+# Two free services. Durable users, sessions, content and images live in Neon.
 services:
   - type: web
     name: ablest-api
@@ -18,16 +18,14 @@ services:
       - key: HOST
         value: 0.0.0.0
       - key: DATA_BACKEND
-        value: supabase
+        value: neon
       - key: WEB_ORIGIN
         value: https://www.ablestsolutions.com
       - key: ADMIN_EMAIL
         value: wilugo91@gmail.com
       - key: ADMIN_SETUP_TOKEN
         generateValue: true
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SECRET_KEY
+      - key: DATABASE_URL
         sync: false
   - type: web
     name: ablest-web
