@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+# Two free services. Durable accounts/content/images live in a separate Supabase project.
+services:
+  - type: web
+    name: ablest-api
+    runtime: node
+    plan: free
+    region: virginia
+    autoDeployTrigger: off
+    buildCommand: corepack pnpm install --frozen-lockfile --prod=false && corepack pnpm --filter @ablest/api build
+    startCommand: corepack pnpm --filter @ablest/api start
+    healthCheckPath: /v1/health/database
+    envVars:
+      - key: NODE_VERSION
+        value: 24.19.0
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATA_BACKEND
+        value: supabase
+      - key: WEB_ORIGIN
+        value: https://www.ablestsolutions.com
+      - key: ADMIN_EMAIL
+        value: wilugo91@gmail.com
+      - key: ADMIN_SETUP_TOKEN
+        generateValue: true
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+  - type: web
+    name: ablest-web
+    runtime: node
+    plan: free
+    region: virginia
+    autoDeployTrigger: off
+    buildCommand: corepack pnpm install --frozen-lockfile --prod=false && corepack pnpm --filter @ablest/web build
+    startCommand: corepack pnpm --filter @ablest/web start:deploy
+    healthCheckPath: /login
+    domains:
+      - www.ablestsolutions.com
+    envVars:
+      - key: NODE_VERSION
+        value: 24.19.0
+      - key: NODE_ENV
+        value: production
+      - key: SITE_URL
+        value: https://www.ablestsolutions.com
+      - key: WEB_ORIGIN
+        value: https://www.ablestsolutions.com
+      # Use the API service's actual PUBLIC HTTPS URL, without /v1.
+      # Free services do not receive private-network traffic.
+      - key: API_URL
+        sync: false

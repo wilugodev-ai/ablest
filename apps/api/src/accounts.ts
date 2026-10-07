@@ -35,6 +35,10 @@ function session(response: Reply,id: string,origin?: string,cookie?: string) {
 }
 export function setupAdministrator(body: unknown,response: Reply,origin: string) {
  originCheck(origin);if(db.prepare('SELECT id FROM owner').get()||db.prepare("SELECT id FROM users WHERE role='admin'").get())throw new ConflictException('An admin account already exists. Please sign in.');
+ if (process.env.NODE_ENV === 'production' || process.env.ADMIN_SETUP_TOKEN) {
+  const input=object(body),expected=process.env.ADMIN_SETUP_TOKEN;
+  if (!expected || expected.length<32 || typeof input.setupToken!=='string' || !timingSafeEqual(createHash('sha256').update(input.setupToken).digest(),createHash('sha256').update(expected).digest())) throw new ForbiddenException('A valid owner setup code is required.');
+ }
  const b=object(body),email=emailFor(b);if(email!==(process.env.ADMIN_EMAIL||'wilugo91@gmail.com').toLowerCase())throw new UnauthorizedException('Incorrect admin email or password.');
  const salt=randomBytes(32).toString('hex'),hash=scryptSync(passwordFor(b),salt,64).toString('hex');
  db.exec('BEGIN');try{db.prepare('INSERT INTO owner VALUES(1,?,?)').run(salt,hash);db.prepare('INSERT INTO users VALUES(?,?,?,?,?,?,?,?)').run('owner',email,'Administrator','','','admin',salt,hash);db.exec('COMMIT');}catch(e){db.exec('ROLLBACK');throw e;}

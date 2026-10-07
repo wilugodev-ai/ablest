@@ -20,7 +20,9 @@ async function proxy(request: Request, context: Context) {
       while (true) { const { done, value } = await reader.read(); if (done) break; total += value.length; if (total > limit) { await reader.cancel(); return Response.json({ message: 'Upload is too large.' }, { status: 413 }); } chunks.push(value); }
       body = new Uint8Array(total); let offset = 0; for (const chunk of chunks) { body.set(chunk, offset); offset += chunk.length; }
     }
-    const upstream = await fetch(`${process.env.API_URL || 'http://127.0.0.1:4200'}/v1/${route}`, { method: request.method, headers, body: body as BodyInit | undefined, cache: 'no-store', signal: AbortSignal.timeout(30000) });
+    const upstream = await fetch(`${process.env.API_URL || 'http://127.0.0.1:4200'}/v1/${route}`, { method: request.method, headers, body: body as BodyInit | undefined, cache: 'no-store', signal: AbortSignal.timeout(75000) });
+    const type=upstream.headers.get('content-type') || '';
+    if(!type.includes('application/json') && !(route.startsWith('images/') && type.startsWith('image/'))) return Response.json({message:'The service is starting or temporarily unavailable. Please wait a moment and try again.'},{status:503});
     const responseHeaders = new Headers({ 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
     for (const name of ['content-type', 'set-cookie']) { const value = upstream.headers.get(name); if (value) responseHeaders.set(name,value); }
     return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
