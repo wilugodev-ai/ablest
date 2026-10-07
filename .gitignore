@@ -7,3 +7,5 @@ dist/
 .env.*
 !.env.example
 .sites-runtime/
+.data/
+test-results/
