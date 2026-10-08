@@ -4,7 +4,7 @@ The business inbox is `ablestdigitalsolutions@gmail.com`. The website stays in E
 
 ## Current activation status
 
-The contact form and server integration are implemented. Resend account connection, sending-domain DNS verification, and a private sending API key are still required. Direct delivery is off until those are ready: `NEXT_PUBLIC_CONTACT_DELIVERY_ENABLED` is unset/false. The public form therefore continues preparing an email for the visitor to send, using the new business inbox.
+Direct contact-form delivery is enabled in production with `NEXT_PUBLIC_CONTACT_DELIVERY_ENABLED=true`. The owner verified `mail.ablestsolutions.com` in North Virginia (`us-east-1`) and saved the private sending API key on the Render API service on October 8, 2026. The API was redeployed with that key. The website is rebuilt with direct delivery enabled, displaying **Send inquiry** and sending inquiries to the business inbox through the API. Actual Gmail receipt still needs confirmation with an owner-submitted inquiry; automated checks do not send real email.
 
 Render Free blocks standard outbound SMTP ports. This integration uses Resend's HTTPS API with Node's built-in fetch and adds no dependency. No mail server or mailbox purchase is required to send these inquiries to the existing Gmail inbox. Choose Resend Free and check its current sending limits before activation.
 
@@ -12,7 +12,7 @@ Render Free blocks standard outbound SMTP ports. This integration uses Resend's 
 
 1. Create a Resend account, preferably using the business email, and keep its Free plan.
 2. Add **mail.ablestsolutions.com** under Domains. This is a sending subdomain; the website continues using www.
-3. Copy the exact DNS records from Resend into Hostinger. They include DKIM and the sending return-path SPF/MX records. Hostinger's Name field normally needs only the part preceding `.ablestsolutions.com`; for example, `resend._domainkey.mail` or `send.mail`. Use the actual dashboard values, not example keys.
+3. Copy the exact DNS records from Resend into Hostinger. This account uses a DKIM TXT record at `resend._domainkey.mail`, a CNAME from `rsend.mail` to `rsend.forge.mta.net`, and a CNAME from `send.mail` to `send.forge.mta.net`. The owner confirmed all three verified in Resend. Hostinger's Name field uses only the part preceding `.ablestsolutions.com`. Copy the complete account-specific DKIM value directly from Resend. Other Resend setups can use different targets/types, so follow their actual dashboard rather than substituting generic SPF/MX examples.
 4. Preserve the website's `@` A and `www` CNAME records and any existing mailbox records. Do not enable Resend receiving or replace root-domain MX records for this feature.
 5. Verify the domain in Resend. It must be ready to send before activation.
 

@@ -52,9 +52,9 @@ services:
         value: https://www.ablestsolutions.com
       - key: WEB_ORIGIN
         value: https://www.ablestsolutions.com
-      # Set true and rebuild only after the API's Resend delivery is configured.
+      # The production API has its verified Resend sender and private sending key.
       - key: NEXT_PUBLIC_CONTACT_DELIVERY_ENABLED
-        value: "false"
+        value: "true"
       # Use the API service's actual PUBLIC HTTPS URL, without /v1.
       # Free services do not receive private-network traffic.
       - key: API_URL
