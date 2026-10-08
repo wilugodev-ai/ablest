@@ -54,4 +54,6 @@ Images are decoded and optimized to WebP, with a hosted stored-size cap of 2 MB 
 
 The prior Supabase adapter/migration remain in the repository as a previous implementation; the Render Blueprint now selects Neon. It requires neither a Supabase project nor Supabase environment variables. The earlier Sites publication is a separate static version. Do not publish the old dist or apps/web/out folders as this server application.
 
-Email verification and client password recovery delivery are still unconfigured. No Render deployment or Hostinger DNS changes have been made automatically.
+The website is deployed at https://ablest-web.onrender.com with its Neon-backed API at https://ablest-api.onrender.com. The current local administrator and portfolio were imported once; local SQLite remains independent. Render automatic deployments are disabled. See the deployment guide before changing its private secret-file/start configuration.
+
+Email verification and client password recovery delivery are still unconfigured. Hostinger DNS and custom-domain activation are pending. The live Render address already supports the website's own client and administrator login.
