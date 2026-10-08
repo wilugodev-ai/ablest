@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { Controller, Get, Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import { ContactController } from './contact';
 @Controller('v1')
 class SiteController {
   @Get('health') health() { return { status: 'ok', service: 'ablest-api' }; }
@@ -14,7 +15,7 @@ async function bootstrap() {
   if(process.env.RENDER==='true' && backend==='sqlite')throw new Error('Render Free requires a hosted database backend for durable data.');
   if(backend==='neon')await (await import('./neon-database')).initialiseNeonDatabase();
   const controllers=backend==='neon'?[(await import('./neon')).NeonController]:backend==='supabase' ? [(await import('./cloud')).CloudController] : [(await import('./content')).ContentController,(await import('./accounts')).AccountsController];
-  const app = await NestFactory.create<NestExpressApplication>({module:AppModule,controllers});
+  const app = await NestFactory.create<NestExpressApplication>({module:AppModule,controllers:[...controllers,ContactController]});
   app.enableShutdownHooks();
   app.useBodyParser('json', { limit: '100kb' });
   app.enableCors({ origin: process.env.WEB_ORIGIN || 'http://127.0.0.1:3200' });

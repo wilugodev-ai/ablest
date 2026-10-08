@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import AccountLinks from './account-links';
 import ProjectGallery from './project-gallery';
+import ContactForm from './contact-form';
 
 const capabilities = [
   ['01', 'Web applications', 'Purpose-built portals, dashboards, and business tools that fit the way your team works.'],
@@ -13,16 +14,10 @@ const capabilities = [
 export default function Home() {
   const [menu, setMenu] = useState(false);
   const [interest, setInterest] = useState('Custom software');
-  const [notice, setNotice] = useState('');
-  function prepareInquiry(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const subject = `Ablests inquiry: ${data.get('service')}`;
-    const body = `Name: ${data.get('name')}\nEmail: ${data.get('email')}\nInterest: ${data.get('service')}\n\n${data.get('message')}`;
-    window.location.href = `mailto:wilugo91@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    setNotice('Your email app will open with your inquiry. Review it and press Send there. If it does not open, email wilugo91@gmail.com directly.');
+  function inquire(service: string) {
+    const selected = service === 'InTouch' ? 'InTouch CRM' : service;
+    setInterest(['Custom software', 'InTouch CRM', 'IterateView', 'Surveillance solutions'].includes(selected) ? selected : 'Something else');
   }
-  function inquire(service: string) { setInterest(service); setNotice(''); }
   return <>
     <a className="skip-link" href="#main">Skip to content</a>
     <header className="header">
@@ -45,7 +40,7 @@ export default function Home() {
       </section>
       <section className="next-section" id="next"><div className="section-wrap next-inner"><div><p className="eyebrow">03 / WHAT’S NEXT</p><span className="badge">Coming soon</span><h2>A clearer view<br/>of your security.</h2><p>We’re planning surveillance camera installation services and a companion software solution. Hardware and software, developed with everyday visibility in mind.</p><a className="text-link" href="#contact" onClick={() => inquire('Surveillance solutions')}>Ask about future availability</a></div><div className="next-list"><article><span>01 / ON-SITE</span><h3>Surveillance camera installation</h3><p>A planned service to help businesses set up their surveillance cameras. Service area and availability will be announced.</p></article><article><span>02 / DIGITAL</span><h3>Companion surveillance software</h3><p>A future software product to support the camera experience. Features and launch details are still being defined.</p></article></div></div></section>
       <section className="section-wrap process"><div><p className="eyebrow">04 / HOW WE WORK</p><h2>Good software starts<br/>with understanding.</h2></div><ol><li><span>01</span><div><h3>Understand the need</h3><p>Talk through your goals, your current workflow, and what needs to change.</p></div></li><li><span>02</span><div><h3>Shape the solution</h3><p>Agree on the scope, priorities, and a plan that fits your project.</p></div></li><li><span>03</span><div><h3>Build and refine</h3><p>Develop in focused steps, review progress together, and refine the details.</p></div></li></ol></section>
-      <section className="contact section-wrap" id="contact"><div className="contact-copy"><p className="eyebrow">LET’S BUILD SOMETHING USEFUL</p><h2>What’s your<br/><em>next move?</em></h2><p>Tell us what you’re working on. Whether it’s custom software or a question about our products, the conversation starts here.</p><a href="mailto:wilugo91@gmail.com" className="email">wilugo91@gmail.com</a></div><form onSubmit={prepareInquiry}><div className="form-row"><label>Your name<input name="name" autoComplete="name" required maxLength={100} placeholder="Alex Morgan"/></label><label>Email address<input name="email" type="email" autoComplete="email" required maxLength={200} placeholder="alex@company.com"/></label></div><label>I’m interested in<select name="service" value={interest} onChange={event => setInterest(event.target.value)}><option>Custom software</option><option>InTouch CRM</option><option>IterateView</option><option>Surveillance solutions</option><option>Something else</option></select></label><label>Tell us about your project<textarea name="message" required maxLength={4000} rows={4} placeholder="What would you like to build or improve?"/></label><button className="button" type="submit">Prepare email inquiry</button><p className="form-note">Opens your email app. Your inquiry is sent only when you press Send there.</p><p role="status" className="form-notice">{notice}</p></form></section>
+      <section className="contact section-wrap" id="contact"><div className="contact-copy"><p className="eyebrow">LET’S BUILD SOMETHING USEFUL</p><h2>What’s your<br/><em>next move?</em></h2><p>Tell us what you’re working on. Whether it’s custom software or a question about our products, the conversation starts here.</p><a href="mailto:ablestdigitalsolutions@gmail.com" className="email">ablestdigitalsolutions@gmail.com</a></div><ContactForm interest={interest} onInterestChange={setInterest}/></section>
     </main>
     <footer className="section-wrap footer"><a className="brand" href="#"><span className="brand-mark">a<span>.</span></span><span>ablests<small>DIGITAL SOLUTION</small></span></a><p>Custom software. Thoughtful solutions.</p><span>© {new Date().getFullYear()} Ablests Digital Solution</span></footer>
   </>;

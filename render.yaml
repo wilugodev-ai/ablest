@@ -27,6 +27,11 @@ services:
         generateValue: true
       - key: DATABASE_URL
         sync: false
+      - key: CONTACT_FROM_EMAIL
+        value: website@mail.ablestsolutions.com
+      - key: CONTACT_TO_EMAIL
+        value: ablestdigitalsolutions@gmail.com
+      # Add RESEND_API_KEY privately to the API service after verifying the sender.
   - type: web
     name: ablest-web
     runtime: node
@@ -47,6 +52,9 @@ services:
         value: https://www.ablestsolutions.com
       - key: WEB_ORIGIN
         value: https://www.ablestsolutions.com
+      # Set true and rebuild only after the API's Resend delivery is configured.
+      - key: NEXT_PUBLIC_CONTACT_DELIVERY_ENABLED
+        value: "false"
       # Use the API service's actual PUBLIC HTTPS URL, without /v1.
       # Free services do not receive private-network traffic.
       - key: API_URL

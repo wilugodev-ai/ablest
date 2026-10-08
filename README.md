@@ -36,7 +36,9 @@ Projects, images, client profiles, and credentials persist in the ignored `.data
 
 ## Inquiries
 
-The contact form prepares a mailto email to wilugo91@gmail.com. Visitors review and send it in their own email application. There is no server submission, delivery confirmation, or database storage. Change the recipient in `apps/web/app/page.tsx` when the business email is available.
+Website inquiries go to **ablestdigitalsolutions@gmail.com**. Direct delivery through Resend is implemented but remains disabled until the sending domain and private API key are configured. In the meantime, the form prepares an email to that address for visitors to send in their own email application. See [contact email setup](docs/email-setup.md) to activate direct delivery.
+
+With delivery enabled, the API validates inquiries, limits submission attempts, and sends plain text to the fixed business inbox, with the visitor as Reply-To. Success is shown only after Resend accepts the request; actual inbox delivery can be checked in Resend. Retrying an unchanged submission uses the same provider idempotency key. Inquiry bodies are not stored in the application database. This configuration does not enable account verification or password-reset email.
 
 ## Product status
 
