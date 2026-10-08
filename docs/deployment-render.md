@@ -12,7 +12,7 @@ The private pooled connection is saved in the ignored `apps/api/.env.hosted` fil
 
 ## Live services
 
-- Website: https://ablest-web.onrender.com — `srv-db3e0q5g1s2s73a2hb90`
+- Website: https://www.ablestsolutions.com — `srv-db3e0q5g1s2s73a2hb90`
 - API: https://ablest-api.onrender.com — `srv-db3dvr6gekts73ecq30g`
 - Database readiness: https://ablest-api.onrender.com/v1/health/database
 
@@ -20,11 +20,11 @@ Both services are on Free, deploy from `main`, and have automatic deployment dis
 
 The API receives its hosted configuration as the private Render secret file `ablest-api.env`, mounted at `/etc/secrets/ablest-api.env`. Its actual start command is `cd apps/api && node --env-file=/etc/secrets/ablest-api.env dist/main.js`. Keep that mount/start command, or explicitly supply `DATABASE_URL` as a Render environment variable before switching to the Blueprint's standard API start command.
 
-For the temporary public website, `WEB_ORIGIN` currently equals `https://ablest-web.onrender.com` on both services, so client/admin login works there. After the custom domain is verified, change both origins to `https://www.ablestsolutions.com` and redeploy both services. `SITE_URL` already uses the intended custom domain.
+`WEB_ORIGIN` equals `https://www.ablestsolutions.com` on both services, and the web `SITE_URL` uses the same address. Use this custom address for client/admin login. The temporary Render address remains reachable, but account writes require the canonical www origin.
 
-Both deployment status checks succeeded. Actual public website registration, secure cookies, profile save/reload, denied client admin access, and sign-out were verified using a temporary account that was removed afterward. The imported administrator's password/settings were verified to match local SQLite.
+Both deployments completed successfully with the canonical www origin. Checks on `https://www.ablestsolutions.com` passed for the homepage/login, apex redirect, published projects, two independent client registrations, secure cookies, profile save/reload and isolation, denied client admin access, rejected role/identity changes, sign-out revocation, and password sign-in. Both temporary clients and their exact throttle records were removed afterward. The imported administrator's password/settings were previously verified to match local SQLite.
 
-Custom-domain activation and Hostinger DNS changes are not completed. The chosen approach matches IterateView: Hostinger DNS points directly to Render, with `www.ablestsolutions.com` as the canonical address. Domain registration and DNS stay with Hostinger. See [the Hostinger-domain connection](deployment-domain.md), including the unresolved account-specific domain allowance.
+Both custom domains are verified with working HTTPS. Hostinger DNS points directly to Render, matching IterateView, with `www.ablestsolutions.com` as the canonical address and a 301 redirect from the apex. Domain registration and DNS stay with Hostinger. See [the Hostinger-domain connection](deployment-domain.md) for the active records and billing context.
 
 ## 1. Create or update the Render Blueprint
 

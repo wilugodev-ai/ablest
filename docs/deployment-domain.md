@@ -4,20 +4,21 @@ Use the same setup as IterateView: Hostinger keeps domain registration and DNS; 
 
 ## Current status
 
-- The website runs at `https://ablest-web.onrender.com` (`srv-db3e0q5g1s2s73a2hb90`).
-- Render has no Ablest custom-domain entries yet. Hostinger DNS changes are pending.
-- Both services currently use `https://ablest-web.onrender.com` for `WEB_ORIGIN`, so login works at the temporary address.
+- The website runs at `https://www.ablestsolutions.com` (`srv-db3e0q5g1s2s73a2hb90`).
+- Both Render domain entries are verified, HTTPS works, and the apex returns a 301 redirect to www. Hostinger publishes the A and CNAME records below, with TTL 300.
+- Both services are configured with `https://www.ablestsolutions.com` for `WEB_ORIGIN`, and the web service uses it for `SITE_URL`. Use the custom address for sign-in and account changes.
+- Both deployments are live. Registration, password login, private profile persistence/isolation, client admin restrictions, and logout passed through the custom domain. The two temporary test clients were removed.
 - The prepared Cloudflare Worker is unused and has not been deployed. This setup requires no Cloudflare account or nameserver change.
 
 ## Render domain allowance
 
 Render's published Hobby plan includes two custom domains across the workspace; additional domains cost $0.25/month each. IterateView currently has an apex entry redirecting to its www entry. The documentation does not explicitly establish how the automatically paired redirect counts toward billing, so these records alone do not prove a charge for Ablest.
 
-The owner requested no additional Render domain fee. Check the workspace's Billing/custom-domain allowance or an explicit cost notice before saving a new domain. A successful API request alone would not establish that the addition is free. No account-specific charge has been confirmed or authorized. The manifest omits automatic domain creation until this is resolved.
+The owner added the Ablest domains through Render's dashboard and updated Hostinger DNS. The manifest now reflects that existing configuration. No account-specific billing amount has been verified; successful domain verification does not establish a zero-cost allowance. No paid plan upgrade was made.
 
 ## 1. Add the existing domain to the Ablest website
 
-In Render, open **ablest-web > Settings > Custom Domains > Add Custom Domain**, then enter `www.ablestsolutions.com`. Use the Ablest service. Once the allowance is confirmed, save it. Render automatically adds `ablestsolutions.com` and redirects it to www.
+This is already complete for the existing service. For a fresh deployment, open **ablest-web > Settings > Custom Domains > Add Custom Domain**, then enter `www.ablestsolutions.com`. Check the workspace's domain allowance before adding another domain. Render automatically adds `ablestsolutions.com` and redirects it to www.
 
 ## 2. Set the website records at Hostinger
 

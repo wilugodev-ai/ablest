@@ -36,6 +36,8 @@ services:
     buildCommand: corepack pnpm install --frozen-lockfile --prod=false && corepack pnpm --filter @ablest/web build
     startCommand: corepack pnpm --filter @ablest/web start:deploy
     healthCheckPath: /login
+    domains:
+      - name: www.ablestsolutions.com
     envVars:
       - key: NODE_VERSION
         value: 24.19.0
