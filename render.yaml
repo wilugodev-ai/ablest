@@ -20,7 +20,7 @@ services:
       - key: DATA_BACKEND
         value: neon
       - key: WEB_ORIGIN
-        value: https://www.ablestsolutions.com
+        value: https://ablestsolutions.com
       - key: ADMIN_EMAIL
         value: wilugo91@gmail.com
       - key: ADMIN_SETUP_TOKEN
@@ -36,17 +36,15 @@ services:
     buildCommand: corepack pnpm install --frozen-lockfile --prod=false && corepack pnpm --filter @ablest/web build
     startCommand: corepack pnpm --filter @ablest/web start:deploy
     healthCheckPath: /login
-    domains:
-      - www.ablestsolutions.com
     envVars:
       - key: NODE_VERSION
         value: 24.19.0
       - key: NODE_ENV
         value: production
       - key: SITE_URL
-        value: https://www.ablestsolutions.com
+        value: https://ablestsolutions.com
       - key: WEB_ORIGIN
-        value: https://www.ablestsolutions.com
+        value: https://ablestsolutions.com
       # Use the API service's actual PUBLIC HTTPS URL, without /v1.
       # Free services do not receive private-network traffic.
       - key: API_URL

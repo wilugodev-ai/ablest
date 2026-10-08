@@ -56,4 +56,4 @@ The prior Supabase adapter/migration remain in the repository as a previous impl
 
 The website is deployed at https://ablest-web.onrender.com with its Neon-backed API at https://ablest-api.onrender.com. The current local administrator and portfolio were imported once; local SQLite remains independent. Render automatic deployments are disabled. See the deployment guide before changing its private secret-file/start configuration.
 
-Email verification and client password recovery delivery are still unconfigured. Hostinger DNS and custom-domain activation are pending. The live Render address already supports the website's own client and administrator login.
+Email verification and client password recovery delivery are still unconfigured. The [free connection for your Hostinger domain](docs/deployment-domain.md) uses a prepared Cloudflare Worker so no Render custom-domain entries or fees are added. Cloudflare account authorization, DNS preservation/delegation, and domain activation are pending. The live Render address already supports the website's own client and administrator login.

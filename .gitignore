@@ -11,3 +11,4 @@ dist/
 test-results/
 supabase/.temp/
 .neon
+.wrangler/
