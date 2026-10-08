@@ -1,51 +1,43 @@
-# Connect the existing Hostinger domain without a Render domain fee
+# Connect the Hostinger domain directly to Render
 
-The public address will be `https://ablestsolutions.com`. Domain registration and renewal stay with Hostinger. Cloudflare's Free DNS/Workers services route this address to the already deployed Render website. The Neon database and the application's own client/admin login remain unchanged.
+Use the same setup as IterateView: Hostinger keeps domain registration and DNS; the existing Render website serves `https://www.ablestsolutions.com`, and `https://ablestsolutions.com` redirects to www. The existing Neon database stores accounts and content.
 
-## What is prepared
+## Current status
 
-`edge/worker.mjs` proxies only to `https://ablest-web.onrender.com`. It accepts only `ablestsolutions.com` and `www.ablestsolutions.com`, redirects www and HTTP to the HTTPS apex, preserves methods/uploads/cookies, rewrites Render redirects back to the custom domain, and disables caching. The route has no database credentials, Worker secrets, or storage bindings.
+- The website runs at `https://ablest-web.onrender.com` (`srv-db3e0q5g1s2s73a2hb90`).
+- Render has no Ablest custom-domain entries yet. Hostinger DNS changes are pending.
+- Both services currently use `https://ablest-web.onrender.com` for `WEB_ORIGIN`, so login works at the temporary address.
+- The prepared Cloudflare Worker is unused and has not been deployed. This setup requires no Cloudflare account or nameserver change.
 
-`edge/wrangler.jsonc` has no live routes until the owned Cloudflare zone is connected. Public workers.dev and preview URLs are disabled. Ten isolated checks cover proxy behavior, private responses, redirects, and host restrictions, and the Wrangler dry-run build passed.
+## Render domain allowance
 
-No Render custom-domain entries should be created. `render.yaml` contains no `domains` declaration for Ablests. Existing IterateView domains must be preserved.
+Render's published Hobby plan includes two custom domains across the workspace; additional domains cost $0.25/month each. IterateView currently has an apex entry redirecting to its www entry. The documentation does not explicitly establish how the automatically paired redirect counts toward billing, so these records alone do not prove a charge for Ablest.
 
-## 1. Connect a Free Cloudflare account
+The owner requested no additional Render domain fee. Check the workspace's Billing/custom-domain allowance or an explicit cost notice before saving a new domain. A successful API request alone would not establish that the addition is free. No account-specific charge has been confirmed or authorized. The manifest omits automatic domain creation until this is resolved.
 
-Authorize Wrangler in the browser using an existing Cloudflare account or a new Free account. The project's CLI auth/cache configuration uses ignored `.sites-runtime` directories. The DNS zone plan and Workers subscription must both remain Free.
+## 1. Add the existing domain to the Ablest website
 
-Add `ablestsolutions.com` as an existing website/zone in the Cloudflare Dashboard and choose the **Free** plan. This step does not transfer domain registration. The Worker requires an active Cloudflare DNS zone; the assigned nameservers are specific to your zone and must be copied exactly.
+In Render, open **ablest-web > Settings > Custom Domains > Add Custom Domain**, then enter `www.ablestsolutions.com`. Use the Ablest service. Once the allowance is confirmed, save it. Render automatically adds `ablestsolutions.com` and redirects it to www.
 
-## 2. Preserve the existing DNS records
+## 2. Set the website records at Hostinger
 
-Before changing nameservers, review/export the complete DNS zone in Hostinger and copy its records into Cloudflare. Preserve mail MX/SPF/DKIM/DMARC, verification TXT records, and unrelated subdomains. Public DNS scans can miss custom records, so compare against Hostinger's full list.
+In Hostinger, open **Domains > ablestsolutions.com > DNS / Nameservers > DNS records**. Keep the existing Hostinger nameservers. Use Render's displayed DNS targets; the documented targets for this service are:
 
-The previous Hostinger nameservers were `ns1.dns-parking.com` and `ns2.dns-parking.com`. The parked root A record was `2.57.91.91`, and www was a CNAME to the root. The parked website records will be replaced with Worker routing only after the rest of the zone is preserved.
+| Type | Name | Value |
+| --- | --- | --- |
+| A | `@` | `216.24.57.1` |
+| CNAME | `www` | `ablest-web.onrender.com` |
 
-## 3. Change only the domain's nameserver delegation
+Replace conflicting website A/CNAME records instead of leaving the parking records alongside them. Remove AAAA records only for the two website hostnames if present. Preserve mail MX/SPF/DKIM/DMARC, verification TXT records, and unrelated services. If CAA records restrict certificate issuers, follow Render's certificate-authority requirements.
 
-In Hostinger, open the domain's **DNS / Nameservers** settings and choose custom nameservers. Replace its current two nameservers with the exact two assigned by Cloudflare. Keep the domain registered at Hostinger. If authorized Hostinger API access is available, the supported portfolio nameservers endpoint can make the same change.
+## 3. Verify and activate the address
 
-Wait for Cloudflare to show the zone as **Active**. The API/website at their onrender addresses remain available during this transition. Do not guess the assigned nameservers or change unrelated domains.
+Return to Render and verify both domain entries. Wait for verified DNS and issued HTTPS certificates. Then set `WEB_ORIGIN` on both Ablest services and `SITE_URL` on the web service to `https://www.ablestsolutions.com`, and redeploy both services. Keep the working Render login origin until DNS and HTTPS are ready.
 
-## 4. Deploy the route and attach the owned hostnames
-
-Deploy the Worker using the connected Free Cloudflare account. Once the zone is active, configure its custom domains as `ablestsolutions.com` and `www.ablestsolutions.com`. Replace only conflicting website A/CNAME records in the Cloudflare zone as needed; an existing CNAME on a hostname can block a Worker custom-domain attachment. Cloudflare manages its DNS mapping and HTTPS certificates.
-
-The Worker canonicalizes both addresses to `https://ablestsolutions.com`. Keep its origin fixed to the existing Render website; do not point it back to its own custom hostname or add arbitrary origin parameters.
-
-## 5. Activate login on the custom address
-
-After routing and HTTPS are ready, set both Render services' `WEB_ORIGIN` and the web service's `SITE_URL` to `https://ablestsolutions.com`, then redeploy them. Until that point, preserve the working `https://ablest-web.onrender.com` login origin. Changing the origin prematurely would block authenticated forms on the working Render address.
-
-Verify the homepage, project data/images, client signup/profile save/reload, administrator sign-in and admin-only navigation, and sign-out through the custom address. Cookies are host-specific, so sign in again on the new hostname; passwords and user settings remain in Neon.
-
-The Free Worker allowance currently includes 100,000 requests/day; exceeding the Free cap returns a limit error instead of automatically upgrading the plan. Regular Hostinger domain renewal and existing provider usage limits still apply. No paid Cloudflare or Render domain plan is needed for this route.
+Verify the homepage, project data/images, client signup and private profile, admin access restrictions, and sign-out on the custom address. Sign in again on the new hostname using the existing credentials. The current Render services are individually managed, so editing `render.yaml` alone does not update their environment settings.
 
 ## Sources
 
-- [Cloudflare custom Worker domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/)
-- [Free Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/)
-- [Free Workers limits](https://developers.cloudflare.com/workers/platform/limits/)
-- [Cloudflare nameserver setup](https://developers.cloudflare.com/dns/zone-setups/full-setup/setup/)
-- [Hostinger nameserver management](https://www.hostinger.com/support/1696789-how-to-change-nameservers-at-hostinger/)
+- [Render custom domains and allowance](https://render.com/docs/custom-domains)
+- [Render DNS targets](https://render.com/docs/configure-other-dns)
+- [Hostinger DNS management](https://www.hostinger.com/support/1583249-how-to-manage-dns-records-at-hostinger/)

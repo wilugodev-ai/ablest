@@ -24,7 +24,7 @@ For the temporary public website, `WEB_ORIGIN` currently equals `https://ablest-
 
 Both deployment status checks succeeded. Actual public website registration, secure cookies, profile save/reload, denied client admin access, and sign-out were verified using a temporary account that was removed afterward. The imported administrator's password/settings were verified to match local SQLite.
 
-Custom-domain activation and Hostinger DNS changes are not completed. The chosen approach is a free Cloudflare Worker routing layer, so no custom-domain entries are added on Render. Domain registration stays with Hostinger. See [the free Hostinger-domain connection](deployment-domain.md).
+Custom-domain activation and Hostinger DNS changes are not completed. The chosen approach matches IterateView: Hostinger DNS points directly to Render, with `www.ablestsolutions.com` as the canonical address. Domain registration and DNS stay with Hostinger. See [the Hostinger-domain connection](deployment-domain.md), including the unresolved account-specific domain allowance.
 
 ## 1. Create or update the Render Blueprint
 

@@ -20,7 +20,7 @@ services:
       - key: DATA_BACKEND
         value: neon
       - key: WEB_ORIGIN
-        value: https://ablestsolutions.com
+        value: https://www.ablestsolutions.com
       - key: ADMIN_EMAIL
         value: wilugo91@gmail.com
       - key: ADMIN_SETUP_TOKEN
@@ -42,9 +42,9 @@ services:
       - key: NODE_ENV
         value: production
       - key: SITE_URL
-        value: https://ablestsolutions.com
+        value: https://www.ablestsolutions.com
       - key: WEB_ORIGIN
-        value: https://ablestsolutions.com
+        value: https://www.ablestsolutions.com
       # Use the API service's actual PUBLIC HTTPS URL, without /v1.
       # Free services do not receive private-network traffic.
       - key: API_URL

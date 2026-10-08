@@ -1,5 +1,7 @@
 # Ablest domain router
 
+This is an unused alternative. The selected deployment now follows IterateView with Hostinger DNS pointing directly to Render; see [the active domain guide](../docs/deployment-domain.md). This Worker has not been deployed and its domain routes remain empty.
+
 This Worker serves `https://ablestsolutions.com` from the existing `https://ablest-web.onrender.com` website. Requests to `www.ablestsolutions.com` and HTTP redirect to the HTTPS apex with status 308. Render does not need a custom domain; the Worker always connects to its existing Render hostname.
 
 Only the apex and `www` hostnames are accepted. The Worker preserves request methods, streams, queries, `Origin`, cookies, and authorization headers. It replaces untrusted forwarding host/protocol headers, handles redirects without following them, and rewrites Render redirect locations to the canonical domain. Every response and upstream fetch bypasses caching, including API, login, account, and admin traffic. There are no Worker secrets or bindings.
