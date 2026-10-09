@@ -59,7 +59,7 @@ export default function ContactForm({ interest, onInterestChange }: Props) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...fields, requestId: attempt.current.requestId }),
-        signal: AbortSignal.timeout(90000),
+        signal: AbortSignal.timeout(165000),
       });
       const result: unknown = await response.json();
       const body = result && typeof result === 'object' ? result as Record<string, unknown> : {};
@@ -93,7 +93,7 @@ export default function ContactForm({ interest, onInterestChange }: Props) {
       </div>
       <button className="button" type="submit" disabled={sending}>{sending ? 'Sending…' : deliveryEnabled ? 'Send inquiry' : 'Prepare email inquiry'}</button>
     </fieldset>
-    <p className="form-note">{deliveryEnabled ? 'Your inquiry goes directly to our team. We’ll reply by email.' : 'Opens your email app. Your inquiry is sent only when you press Send there.'}</p>
+    <p className="form-note" aria-live="polite">{sending ? 'Sending may take a moment. Please keep this page open.' : deliveryEnabled ? 'Your inquiry goes directly to our team. We’ll reply by email.' : 'Opens your email app. Your inquiry is sent only when you press Send there.'}</p>
     <p className="form-notice" role="status" aria-live="polite">{notice}</p>
     {error && <p className="contact-error" role="alert">{error}</p>}
     <p className="form-note">Prefer email? <a className="contact-email-link" href="mailto:ablestdigitalsolutions@gmail.com">Write to ablestdigitalsolutions@gmail.com</a>.</p>
