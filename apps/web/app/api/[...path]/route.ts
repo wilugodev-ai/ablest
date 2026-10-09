@@ -9,6 +9,8 @@ async function proxy(request: Request, context: Context) {
   const route = path.join('/');
   if (!/^(contact|projects|images\/[a-f0-9-]{36}|auth\/(session|register|login|logout)|account|admin\/(session|setup|login|logout|clients|projects(?:\/[a-f0-9-]{36}(?:\/images)?)?|images\/[a-f0-9-]{36}))$/.test(route)) return Response.json({ message: 'Not found.' }, { status: 404 });
   if (route === 'contact' && request.method !== 'POST') return Response.json({ message: 'Method not allowed.' }, { status: 405, headers: { Allow: 'POST' } });
+  const isAuth = route.startsWith('auth/') || /^admin\/(session|setup|login|logout)$/.test(route);
+  const needsReadiness = route === 'contact' || isAuth;
   const isWrite = !['GET', 'HEAD'].includes(request.method);
   const origin = request.headers.get('origin') || '';
   const allowed = process.env.WEB_ORIGIN ? [process.env.WEB_ORIGIN] : ['http://127.0.0.1:3200', 'http://localhost:3200'];
@@ -26,11 +28,11 @@ async function proxy(request: Request, context: Context) {
       body = new Uint8Array(total); let offset = 0; for (const chunk of chunks) { body.set(chunk, offset); offset += chunk.length; }
     }
     const apiUrl = process.env.API_URL || 'http://127.0.0.1:4200';
-    if (route === 'contact') {
-      if (!await waitForApiReady(apiUrl, request.signal)) return Response.json({ message: 'The contact form is taking longer to start. Your inquiry has not been sent. Please try again or email ablestdigitalsolutions@gmail.com directly.' }, { status: 503, headers: { 'Cache-Control': 'no-store', 'Retry-After': '3' } });
+    if (needsReadiness) {
+      if (!await waitForApiReady(apiUrl, request.signal)) return Response.json({ message: route === 'contact' ? 'The contact form is taking longer to start. Your inquiry has not been sent. Please try again or email ablestdigitalsolutions@gmail.com directly.' : 'The account service is taking longer to start. Please try again.' }, { status: 503, headers: { 'Cache-Control': 'no-store', 'Retry-After': '3' } });
       request.signal.throwIfAborted();
     }
-    const upstream = await fetch(`${apiUrl}/v1/${route}`, { method: request.method, headers, body: body as BodyInit | undefined, cache: 'no-store', signal: route === 'contact' ? AbortSignal.any([request.signal, AbortSignal.timeout(75000)]) : AbortSignal.timeout(75000) });
+    const upstream = await fetch(`${apiUrl}/v1/${route}`, { method: request.method, headers, body: body as BodyInit | undefined, cache: 'no-store', signal: needsReadiness ? AbortSignal.any([request.signal, AbortSignal.timeout(75000)]) : AbortSignal.timeout(75000) });
     const type=upstream.headers.get('content-type') || '';
     if(!type.includes('application/json') && !(route.startsWith('images/') && type.startsWith('image/'))) {
       await upstream.body?.cancel().catch(() => {});

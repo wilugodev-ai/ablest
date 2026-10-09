@@ -118,6 +118,27 @@ test('readiness budget exhaustion returns an error without dispatching the inqui
   assert.equal(calls[0].options.method, 'GET');
 });
 
+test('a 32-second cold start can finish in one pending health request', async t => {
+  let now = 0;
+  const timers = [];
+  t.mock.method(AbortSignal, 'timeout', duration => {
+    const controller = new AbortController();
+    timers.push({ due: now + duration, controller });
+    return controller.signal;
+  });
+  const network = t.mock.method(globalThis, 'fetch', async (url, options) => {
+    assert.equal(url, `${upstreamOrigin}/v1/health`);
+    now += 32000;
+    for (const timer of timers) {
+      if (timer.due <= now) timer.controller.abort(new DOMException('Synthetic elapsed timeout', 'TimeoutError'));
+    }
+    options.signal.throwIfAborted();
+    return healthy();
+  });
+  assert.equal(await waitForApiReady(upstreamOrigin, new AbortController().signal), true);
+  assert.equal(network.mock.callCount(), 1);
+});
+
 test('a timed-out startup probe can recover without sending an inquiry before readiness', async t => {
   const probe = new AbortController();
   let timeoutCalls = 0;
@@ -241,23 +262,50 @@ test('contact origin, method, path, and both body-size checks run before any rea
   assert.equal(network.mock.callCount(), 0);
 });
 
-test('existing authentication and account routes keep direct forwarding and upstream status and cookies', async t => {
-  const { route, readinessCalls } = fixture(t, async () => { throw new Error('Auth must not probe contact readiness'); });
+test('authentication waits through startup and forwards credentials and cookies exactly once', async t => {
+  const { route, readinessCalls } = fixture(t);
   const calls = [];
+  let probes = 0;
   t.mock.method(globalThis, 'fetch', async (url, options) => {
+    if (url.endsWith('/v1/health')) {
+      probes++;
+      assert.equal(options.method, 'GET');
+      assert.equal(options.body, undefined);
+      assert.equal(new Headers(options.headers).get('cookie'), null);
+      return probes % 2 ? new Response('Starting', { headers: { 'Content-Type': 'text/html' } }) : healthy();
+    }
     calls.push({ url, options });
     assert.equal(new Headers(options.headers).get('cookie'), 'fixture_session=value');
-    if (url.endsWith('/auth/login')) {
+    if (url.endsWith('/login')) {
       return Response.json({ authenticated: true }, { headers: { 'Set-Cookie': 'fixture_session=rotated; HttpOnly; Secure; SameSite=Strict' } });
     }
     return Response.json({ message: 'Sign in required' }, { status: 401 });
   });
-  for (const [path, method] of [['auth/session', 'GET'], ['auth/login', 'POST'], ['account', 'PATCH']]) {
-    const response = await route[method](request(path, { method, headers: { Cookie: 'fixture_session=value' } }), context(path));
-    assert.equal(response.status, path === 'auth/login' ? 200 : 401);
+  const paths = [['auth/session', 'GET'], ['auth/login', 'POST'], ['auth/register', 'POST'], ['admin/login', 'POST'], ['account', 'PATCH']];
+  for (const [path, method] of paths) {
+    const payload = JSON.stringify({ email: 'fixture@example.com', password: 'synthetic-password' });
+    const response = await route[method](request(path, { method, ...(method === 'GET' ? {} : { body: payload }), headers: { Cookie: 'fixture_session=value' } }), context(path));
+    assert.equal(response.status, path.endsWith('/login') ? 200 : 401);
     assert.equal(response.headers.get('cache-control'), 'no-store');
-    if (path === 'auth/login') assert.match(response.headers.get('set-cookie'), /fixture_session=rotated; HttpOnly; Secure/);
+    if (path.endsWith('/login')) assert.match(response.headers.get('set-cookie'), /fixture_session=rotated; HttpOnly; Secure/);
+    if (method !== 'GET') assert.equal(new TextDecoder().decode(calls.at(-1).options.body), payload);
   }
-  assert.equal(readinessCalls.length, 0);
-  assert.deepEqual(calls.map(call => call.url), [`${upstreamOrigin}/v1/auth/session`, `${upstreamOrigin}/v1/auth/login`, `${upstreamOrigin}/v1/account`]);
+  assert.equal(readinessCalls.length, 4);
+  assert.equal(probes, 8);
+  assert.deepEqual(calls.map(call => call.url), paths.map(([path]) => `${upstreamOrigin}/v1/${path}`));
+});
+
+test('authentication readiness failures do not forward credentials or retry a login', async t => {
+  let available = false;
+  const { route } = fixture(t, async () => available);
+  const network = t.mock.method(globalThis, 'fetch', async () => { throw new Error('No request while unavailable'); });
+  const unavailable = await route.POST(request('auth/login'), context('auth/login'));
+  assert.equal(unavailable.status, 503);
+  assert.match((await unavailable.json()).message, /account service/i);
+  assert.equal(network.mock.callCount(), 0);
+
+  available = true;
+  const ambiguous = await route.POST(request('auth/login'), context('auth/login'));
+  assert.equal(ambiguous.status, 503);
+  assert.equal(network.mock.callCount(), 1, 'A login with an uncertain outcome must never be replayed');
 });

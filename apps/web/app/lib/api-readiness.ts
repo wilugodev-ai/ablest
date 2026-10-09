@@ -2,7 +2,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 type Timing = { budgetMs?: number; probeTimeoutMs?: number; retryDelayMs?: number };
 
-// Only health GETs are retried. The caller sends its inquiry once after readiness.
+// Only health GETs are retried. The caller forwards its request once after readiness.
 export async function waitForApiReady(apiUrl: string, signal: AbortSignal, timing: Timing = {}): Promise<boolean> {
   const deadline = AbortSignal.timeout(timing.budgetMs ?? 75000);
   const readinessSignal = AbortSignal.any([signal, deadline]);
@@ -14,7 +14,9 @@ export async function waitForApiReady(apiUrl: string, signal: AbortSignal, timin
     try {
       response = await fetch(healthUrl, {
         method: 'GET', cache: 'no-store', redirect: 'error',
-        signal: AbortSignal.any([readinessSignal, AbortSignal.timeout(timing.probeTimeoutMs ?? 8000)]),
+        // A cold Render request can stay pending for tens of seconds. Let it
+        // finish within the overall budget instead of cancelling it every 8s.
+        signal: AbortSignal.any([readinessSignal, AbortSignal.timeout(timing.probeTimeoutMs ?? 75000)]),
       });
       if (response.ok && response.headers.get('content-type')?.split(';')[0].trim().toLowerCase() === 'application/json') {
         const body: unknown = await response.json();
@@ -22,7 +24,7 @@ export async function waitForApiReady(apiUrl: string, signal: AbortSignal, timin
       }
     } catch {
       // Render can return HTML, a connection error, or a timeout while waking.
-      // None of these safe probes contains the inquiry or sends an email.
+      // Safe probes contain no inquiry, credentials, or cookies and perform no writes.
     } finally {
       if (response?.body && !response.bodyUsed) await response.body.cancel().catch(() => {});
     }
