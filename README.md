@@ -46,6 +46,8 @@ InTouch and IterateView are labeled in development. Surveillance installation an
 
 ## Deployment
 
+Google migration uses a separate `ablest-20261023` project, following InTouch's Cloud Run setup. Both container images and website/API previews are deployed; Neon data is preserved. Public DNS now points to Google; HTTPS, the homepage/login and the apex-to-www redirect are verified. See [Google deployment](docs/deployment-google-cloud.md) and [Hostinger DNS records](docs/domain-google-cloud.md) for current status and remaining checks.
+
 See [Render Free + Neon deployment](docs/deployment-render.md) for ablests and its Hostinger domain. The root render.yaml defines two free services. The API needs the separate Neon's pooled DATABASE_URL as a server-only secret. Hosted startup selects DATA_BACKEND=neon; local development defaults to sqlite. These databases are independent and are not synchronized automatically. Neon mode does not initialize or write to the local SQLite store.
 
 The hosted API applies postgres/schema.sql safely on startup. All existing user settings, client profiles, administrator roles, scrypt password hashes, session records, projects, and optimized image bytes are stored in Neon. Client profiles contain only name, email, company, and phone. Authentication remains managed by the application with HttpOnly cookies; there is no ChatGPT login or automatic external authentication-provider change.

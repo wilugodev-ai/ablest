@@ -1,0 +1,27 @@
+# Only application source and build manifests enter the container build.
+**
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!apps/
+!apps/api/
+!apps/api/package.json
+!apps/api/tsconfig.json
+!apps/api/src/
+!apps/api/src/**
+!apps/web/
+!apps/web/package.json
+!apps/web/tsconfig.json
+!apps/web/next-env.d.ts
+!apps/web/next.config.ts
+!apps/web/app/
+!apps/web/app/**
+!deploy/
+!deploy/cloud-run/
+!deploy/cloud-run/Dockerfile
+!.dockerignore
+
+!postgres/
+!postgres/schema.sql
+!apps/web/public/
+!apps/web/public/**
