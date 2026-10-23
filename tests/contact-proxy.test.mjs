@@ -295,6 +295,36 @@ test('authentication waits through startup and forwards credentials and cookies 
   assert.deepEqual(calls.map(call => call.url), paths.map(([path]) => `${upstreamOrigin}/v1/${path}`));
 });
 
+test('portfolio waits through an HTML startup response before loading published projects', async t => {
+  const { route, readinessCalls } = fixture(t);
+  const calls = [];
+  const projects = [{ id: 'published-project', title: 'InTouch', images: [] }];
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    calls.push(url);
+    assert.equal(options.method, 'GET');
+    if (calls.length === 1) return new Response('<html>Starting</html>', { status: 503, headers: { 'Content-Type': 'text/html' } });
+    if (url.endsWith('/v1/health')) return healthy();
+    assert.equal(url, `${upstreamOrigin}/v1/projects`);
+    return Response.json(projects);
+  });
+  const response = await route.GET(request('projects', { method: 'GET' }), context('projects'));
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), projects);
+  assert.equal(readinessCalls.length, 1);
+  assert.deepEqual(calls, [`${upstreamOrigin}/v1/health`, `${upstreamOrigin}/v1/health`, `${upstreamOrigin}/v1/projects`]);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+});
+
+test('portfolio readiness exhaustion returns a retryable error without dispatching projects', async t => {
+  const { route } = fixture(t, async () => false);
+  const network = t.mock.method(globalThis, 'fetch', async () => { throw new Error('No project request before readiness'); });
+  const response = await route.GET(request('projects', { method: 'GET' }), context('projects'));
+  assert.equal(response.status, 503);
+  assert.equal(response.headers.get('retry-after'), '3');
+  assert.match((await response.json()).message, /projects.*load/i);
+  assert.equal(network.mock.callCount(), 0);
+});
+
 test('authentication readiness failures do not forward credentials or retry a login', async t => {
   let available = false;
   const { route } = fixture(t, async () => available);
